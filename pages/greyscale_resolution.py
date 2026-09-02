@@ -46,24 +46,18 @@ def student_build_preview_triplets(
     rows: int,
     seed: int,
 ) -> list[str]:
-    """TODO: generate a deterministic preview chart.
-
-    Return exactly `rows` strings, each three letters long, sampled from
-    `letters_pool` using a RNG initialized with `seed`. This helper keeps the
-    view consistent across reruns.
-
-    If `rows <= 0` or `letters_pool` is empty, return an empty list.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Generate a deterministic preview chart."""
+    if rows <= 0 or not letters_pool:
+        return []
+    rng = random.Random(seed)
+    return ["".join(rng.choices(letters_pool, k=3)) for _ in range(rows)]
 
 
 def student_compute_contrast_levels(*, rows: int, step_log10: float) -> list[float]:
-    """TODO: return a log-spaced contrast schedule in percent.
-
-    Use `contrast_percent = 100 * 10 ** (-(row_index * step_log10))` for
-    row_index 0..rows‑1. If `rows <= 0`, return an empty list.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Return a log-spaced contrast schedule in percent."""
+    if rows <= 0:
+        return []
+    return [100 * (10 ** (-(row_index * step_log10))) for row_index in range(rows)]
 
 
 def student_advance_contrast_state(
@@ -72,21 +66,20 @@ def student_advance_contrast_state(
     response_yes: bool,
     total_levels: int,
 ) -> tuple[int, bool]:
-    """TODO: advance the trial index or finish the run.
-
-    Return `(next_index, finished)`. Finish if `response_yes` is False or when
-    advancing goes beyond `total_levels - 1`. Clamp `next_index` to valid range.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Advance the trial index or finish the run."""
+    if not response_yes:
+        return (max(0, min(trial_index, total_levels - 1)), True)
+    next_index = trial_index + 1
+    if next_index >= total_levels:
+        return (total_levels - 1, True)
+    return (next_index, False)
 
 
 def student_compute_log_contrast_sensitivity(threshold_percent: float) -> float:
-    """TODO: convert percent threshold to log contrast sensitivity.
-
-    Use `log10(1 / (threshold_percent / 100))` and guard against zero or
-    negative thresholds to avoid math errors.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Convert percent threshold to log contrast sensitivity."""
+    if threshold_percent <= 0:
+        return 0.0
+    return math.log10(1 / (threshold_percent / 100.0))
 
 
 with st.expander("Assignment TODOs (Edit This Page)"):
