@@ -67,7 +67,6 @@ def student_build_amplitude_intervals_audio(
     reference_hz: int,
     target_index: int,
 ) -> list[bytes]:
-    """Build one 3AFC trial audio set for amplitude discrimination."""
     ratio = 10.0 ** (delta_db / 20.0)
     target_amplitude = max(0.01, min(0.95, baseline_amplitude * ratio))
     duration_s = float(cfg["tone_duration_s"])
@@ -175,21 +174,9 @@ def student_plot_staircase_with_threshold(
 with st.expander("Assignment TODOs (Edit This Page)"):
     st.markdown(
         "- Implement `student_build_amplitude_intervals_audio`.\n"
-        "- Implement shared 3AFC helpers in `pages/_shared_3afc_student.py`:\n"
-        "  - `shared_student_apply_reversal_update`\n"
-        "  - `shared_student_plot_staircase`\n"
-        "  - `shared_student_build_three_interval_targets`\n"
-        "  - `shared_student_update_staircase_state`\n"
-        "  - `shared_student_estimate_threshold_from_reversals`\n"
-        "  - `shared_student_compute_recent_accuracy`\n"
-        "  - `shared_student_validate_audio_params`\n"
-        "  - `shared_student_plot_staircase_with_threshold`"
+        "- Implement shared 3AFC helpers in `pages/_shared_3afc_student.py`."
     )
 
-st.caption(
-    "How these functions connect: generate 3-interval audio -> collect response -> "
-    "update staircase/reversals -> estimate threshold -> compute accuracy -> plot results."
-)
 
 try:
     _ = student_build_three_interval_targets(target_index=1)
@@ -244,11 +231,6 @@ try:
     )
 except NotImplementedError as error:
     st.error(str(error))
-    st.warning(
-        "Assignment mode is active for this page. Complete "
-        "`student_build_amplitude_intervals_audio` in this file and the shared 3AFC "
-        "TODOs in `pages/_shared_3afc_student.py`, then reload."
-    )
     st.stop()
 
 adaptive = init_adaptive_state(
