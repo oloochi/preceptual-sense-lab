@@ -1,3 +1,4 @@
+import math
 import random
 
 import streamlit as st
@@ -41,28 +42,13 @@ ORIENTATIONS = ["Up", "Down", "Left", "Right"]
 
 
 def student_next_size_index(*, current_index: int, is_correct: bool, max_index: int) -> int:
-    """TODO: Compute the next adaptive size index for the staircase.
-
-    Why this function exists:
-        This is the core adaptive rule for the visual acuity task. The page calls it
-        after every response to decide whether the next Tumbling E should be harder
-        (smaller) or easier (larger). If this logic is wrong, the whole test becomes
-        invalid because stimulus difficulty no longer tracks performance.
-
-    Inputs:
-        current_index: Current index in `SIZE_LEVELS_PX`.
-        is_correct: Whether the student selected the correct orientation this trial.
-        max_index: Largest valid index in the size-level list.
-
-    Output:
-        The next valid index (integer) in the closed range `[0, max_index]`.
-
-    Required behavior:
-        - Correct response: move to a smaller optotype by increasing index by 1.
-        - Incorrect response: move to a larger optotype by decreasing index by 1.
-        - Always clamp so index never goes below 0 or above `max_index`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Compute the next adaptive size index for the staircase."""
+    if is_correct:
+        next_index = current_index + 1
+    else:
+        next_index = current_index - 1
+        
+    return max(0, min(next_index, max_index))
 
 
 def student_build_trial_log_row(
@@ -73,79 +59,39 @@ def student_build_trial_log_row(
     correct_orientation: str,
     response: str,
 ) -> dict[str, str | int | float]:
-    """TODO: Build a complete, standardized row for the trial log table.
-
-    Why this function exists:
-        The experiment needs a clean row per trial for grading and analysis. This
-        function converts raw trial values into the exact display schema used later
-        by `st.dataframe`, so every row is consistent and easy to interpret.
-
-    Inputs:
-        trial_no: 1-based trial counter.
-        size_px: Rendered optotype size (pixels) for this trial.
-        mar_arcmin: Calculated MAR value for this size and setup.
-        correct_orientation: Ground-truth direction shown to the participant.
-        response: Participant-selected direction.
-
-    Output:
-        Dictionary with the exact table columns expected by this page, including a
-        correctness field derived from `response == correct_orientation`.
-
-    Required behavior:
-        - Keep column names consistent with existing table rendering.
-        - Include correctness as an explicit readable value.
-        - Round MAR to 2 decimals for stable, readable output.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Build a complete, standardized row for the trial log table."""
+    return {
+        "Trial": trial_no,
+        "Size (px)": size_px,
+        "MAR (arcmin)": round(mar_arcmin, 2),
+        "Target": correct_orientation,
+        "Response": response,
+        "Correct": "Yes" if response == correct_orientation else "No",
+    }
 
 
 def student_validate_screen_geometry(
     *, distance_cm: float, screen_width_mm: float, screen_width_px: int
 ) -> bool:
-    """TODO: Validate whether screen-geometry inputs are usable.
-
-    Why this function exists:
-        MAR calculations rely on physically meaningful geometry values. Invalid
-        distances or screen dimensions create nonsense results and confuse users.
-
-    Inputs:
-        distance_cm: Viewing distance in centimeters.
-        screen_width_mm: Physical display width in millimeters.
-        screen_width_px: Horizontal pixel resolution corresponding to width.
-
-    Output:
-        `True` when values are valid for computation; otherwise `False`.
-
-    Suggested checks:
-        - All values are positive.
-        - Pixel width is large enough to avoid divide-by-zero / tiny denominator.
-        - Distance and width remain in realistic human-testing ranges.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Validate whether screen-geometry inputs are usable."""
+    return distance_cm > 0.0 and screen_width_mm > 0.0 and screen_width_px > 0
 
 
 def student_compute_mar_arcmin(size_px: int, mm_per_px: float, distance_cm: float) -> float:
-    """TODO: Compute MAR (minimum angle of resolution) in arcminutes.
-
-    Why this function exists:
-        Pixel size alone is device-dependent; MAR converts that size into a vision
-        metric that is comparable across screens and viewing distances.
-
-    Inputs:
-        size_px: Current optotype size in pixels.
-        mm_per_px: Pixel pitch (millimeters per pixel).
-        distance_cm: Viewing distance in centimeters.
-
-    Output:
-        MAR in arcminutes as a float.
-
-    Implementation guidance:
-        - Convert pixel size to millimeters (`size_px * mm_per_px`).
-        - Convert distance to matching units (millimeters).
-        - Use a small-angle geometry formula, then convert radians to arcminutes.
-        - Return a positive float and guard invalid denominators.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Compute MAR (minimum angle of resolution) in arcminutes."""
+    if distance_cm <= 0:
+        return 0.0
+        
+    # The Tumbling E grid is 5x5, so the resolution gap detail (MAR) is 1/5th the total size
+    total_size_mm = size_px * mm_per_px
+    detail_mm = total_size_mm / 5.0
+    distance_mm = distance_cm * 10.0
+    
+    # Small-angle geometry: angle in radians is approx (detail / distance)
+    angle_radians = detail_mm / distance_mm
+    
+    # Convert radians to degrees, then to arcminutes
+    return (angle_radians * 180.0 / math.pi) * 60.0
 
 
 def student_format_trial_log_row(
@@ -156,18 +102,14 @@ def student_format_trial_log_row(
     correct_orientation: str,
     response: str,
 ) -> dict[str, str | int | float]:
-    """TODO: Wrapper/formatter for a standardized trial-log row.
-
-    Why this function exists:
-        In many real codebases, one helper computes values and another helper
-        formats them for display. Keeping this function separate teaches modular
-        design and avoids spreading table-format logic across the page.
-
-    Expected use:
-        This function should return the same schema as `student_build_trial_log_row`,
-        potentially by calling it internally and applying final formatting rules.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Wrapper/formatter for a standardized trial-log row."""
+    return student_build_trial_log_row(
+        trial_no=trial_no,
+        size_px=size_px,
+        mar_arcmin=mar_arcmin,
+        correct_orientation=correct_orientation,
+        response=response,
+    )
 
 
 with st.expander("Assignment TODOs (Edit This Page)"):
