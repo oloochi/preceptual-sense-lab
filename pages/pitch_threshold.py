@@ -66,27 +66,23 @@ def student_build_pitch_intervals_audio(
     amplitude: float,
     target_index: int,
 ) -> list[bytes]:
-    """TODO: Build one 3AFC trial audio set for pitch discrimination.
-
-    Why this function exists:
-        Each trial requires three tones where only one differs in pitch. This helper
-        keeps trial stimulus construction modular and testable.
-
-    Inputs:
-        reference_hz: Base frequency used for two non-target intervals.
-        delta_hz: Positive pitch increment for the target interval.
-        amplitude: Shared playback amplitude.
-        target_index: Index (0, 1, 2) of the higher-pitch interval.
-
-    Output:
-        List of exactly 3 WAV byte payloads.
-
-    Required behavior:
-        - Two clips at `reference_hz`.
-        - One clip at `reference_hz + delta_hz`.
-        - Keep duration and amplitude consistent across intervals.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Build one 3AFC trial audio set for pitch discrimination."""
+    duration_s = float(cfg["tone_duration_s"])
+    target_hz = float(reference_hz) + delta_hz
+    
+    wav_outputs = []
+    for i in range(3):
+        # Target interval gets the higher pitch; others get the reference pitch
+        freq = target_hz if i == target_index else float(reference_hz)
+        
+        wav_bytes = single_tone_wav(
+            frequency_hz=freq,
+            duration_s=duration_s,
+            amplitude=amplitude,
+        )
+        wav_outputs.append(wav_bytes)
+        
+    return wav_outputs
 
 
 def student_apply_reversal_update(
