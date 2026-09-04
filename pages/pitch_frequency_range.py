@@ -2,7 +2,6 @@ import streamlit as st
 
 from utils.audio_tools import single_tone_wav
 from utils.test_config import load_test_config
-
 from utils.ui import (
     render_instructions,
     render_page_header,
@@ -52,21 +51,28 @@ def student_estimate_audible_bounds(
     probe_history_hz: list[int],
     heard_flags: list[bool],
 ) -> tuple[int, int]:
-    """TODO: summarize heard probe frequencies into lower/upper bounds.
-
-    Pair the frequencies marked as heard and return the min/max. If no probes
-    were heard, return a sensible fallback such as the configured default.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Summarize heard probe frequencies into lower/upper bounds."""
+    heard_frequencies = [
+        freq for freq, heard in zip(probe_history_hz, heard_flags) if heard
+    ]
+    
+    if not heard_frequencies:
+        return (default_frequency, default_frequency)
+        
+    return (min(heard_frequencies), max(heard_frequencies))
 
 
 def student_validate_audio_params(*, frequency_hz: int, amplitude: float) -> bool:
-    """TODO: ensure requested playback parameters stay within config limits.
-
-    Return `True` when `frequency_hz` and `amplitude` fall inside the configured
-    range, otherwise return `False`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Ensure requested playback parameters stay within config limits."""
+    freq_min = int(cfg["frequency_hz"]["min"])
+    freq_max = int(cfg["frequency_hz"]["max"])
+    amp_min = float(cfg["playback_amplitude"]["min"])
+    amp_max = float(cfg["playback_amplitude"]["max"])
+    
+    is_freq_valid = freq_min <= frequency_hz <= freq_max
+    is_amp_valid = amp_min <= amplitude <= amp_max
+    
+    return is_freq_valid and is_amp_valid
 
 
 with st.expander("Assignment TODOs (Edit This Page)"):
@@ -97,5 +103,9 @@ with st.container(border=True):
         value=default_amplitude,
         step=float(cfg["playback_amplitude"]["step"]),
     )
-    st.audio(single_tone_wav(frequency_hz=frequency_hz, amplitude=amplitude), format="audio/wav")
-    st.caption(f"Current test tone: {format_frequency_hz(int(frequency_hz))}")
+    
+    if student_validate_audio_params(frequency_hz=frequency_hz, amplitude=amplitude):
+        st.audio(single_tone_wav(frequency_hz=frequency_hz, amplitude=amplitude), format="audio/wav")
+        st.caption(f"Current test tone: {format_frequency_hz(int(frequency_hz))}")
+    else:
+        st.error("Audio parameters are out of configured bounds.")
