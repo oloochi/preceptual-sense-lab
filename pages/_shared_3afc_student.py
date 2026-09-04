@@ -14,6 +14,8 @@ Implementation expectations:
 - Prefer small, pure functions with no Streamlit state mutations.
 - Validate/clamp values to avoid invalid outputs.
 """
+import matplotlib.pyplot as plt
+import streamlit as st
 
 
 def shared_student_apply_reversal_update(
@@ -26,51 +28,66 @@ def shared_student_apply_reversal_update(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """TODO: Apply one 2-down/1-up staircase update.
-
-    Inputs:
-        current_level: current adaptive stimulus level.
-        step: step size for level change.
-        is_correct: whether the response is correct.
-        correct_streak: consecutive correct count before this trial.
-        down_n: number of correct responses needed to step down.
-        min_level: minimum allowed level.
-        max_level: maximum allowed level.
-
-    Returns:
-        Tuple `(next_level, next_correct_streak)` after one update.
-
-    Safety requirements:
-        - Clamp level to `[min_level, max_level]`.
-        - Treat `down_n < 1` as 1 to avoid zero-step loops.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Apply one 2-down/1-up staircase update."""
+    safe_down_n = max(1, down_n)
+    
+    if not is_correct:
+        # Incorrect: move to an easier (higher) level, reset correct streak
+        next_level = current_level + step
+        next_streak = 0
+    else:
+        # Correct: increment streak. If streak reaches down_n, move to harder (lower) level
+        next_streak = correct_streak + 1
+        if next_streak >= safe_down_n:
+            next_level = current_level - step
+            next_streak = 0
+        else:
+            next_level = current_level
+            
+    # Clamp to boundaries
+    next_level = max(min_level, min(max_level, next_level))
+    return next_level, next_streak
 
 
 def shared_student_plot_staircase(
     history: list[dict], threshold: float, y_label: str, title: str
 ) -> None:
-    """TODO: Plot the staircase trace for the given history.
+    """Plot the staircase trace for the given history."""
+    if not history:
+        return
 
-    Expected plot content:
-        - X-axis: trial number.
-        - Y-axis: level value per trial.
-        - Visual distinction for correct vs incorrect trials.
-        - Threshold drawn as a horizontal dashed line.
+    trials = [row.get("Trial", i + 1) for i, row in enumerate(history)]
+    levels = [row.get("Level", 0.0) for row in history]
+    corrects = [row.get("Correct") == "Yes" for row in history]
 
-    Safety requirements:
-        - Do not crash for empty or very short history lists.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    fig, ax = plt.subplots(figsize=(8, 4))
+    
+    # Plot continuous trace
+    ax.plot(trials, levels, color="black", alpha=0.4, zorder=1)
+    
+    # Split scatter points by correctness
+    c_x = [t for i, t in enumerate(trials) if corrects[i]]
+    c_y = [l for i, l in enumerate(levels) if corrects[i]]
+    i_x = [t for i, t in enumerate(trials) if not corrects[i]]
+    i_y = [l for i, l in enumerate(levels) if not corrects[i]]
+
+    ax.scatter(c_x, c_y, color="green", label="Correct", zorder=2)
+    ax.scatter(i_x, i_y, color="red", label="Incorrect", zorder=2)
+    
+    ax.axhline(threshold, color="blue", linestyle="--", label="Estimated Threshold", zorder=1)
+
+    ax.set_xlabel("Trial")
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, linestyle=":", alpha=0.6)
+
+    st.pyplot(fig)
 
 
 def shared_student_build_three_interval_targets(*, target_index: int) -> list[bool]:
-    """TODO: Build a length-3 target mask with exactly one `True` entry.
-
-    Example:
-        target_index=1 -> [False, True, False]
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Build a length-3 target mask with exactly one `True` entry."""
+    return [i == target_index for i in range(3)]
 
 
 def shared_student_update_staircase_state(
@@ -83,46 +100,52 @@ def shared_student_update_staircase_state(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """TODO: Reusable helper that keeps staircase behavior consistent.
-
-    This can wrap or share logic with `shared_student_apply_reversal_update`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Reusable helper that keeps staircase behavior consistent."""
+    return shared_student_apply_reversal_update(
+        current_level=current_level,
+        step=step,
+        is_correct=is_correct,
+        correct_streak=correct_streak,
+        down_n=down_n,
+        min_level=min_level,
+        max_level=max_level,
+    )
 
 
 def shared_student_estimate_threshold_from_reversals(
     *, reversals: list[float], fallback_level: float, tail_count: int = 4
 ) -> float:
-    """TODO: Estimate threshold using the trailing reversal points.
-
-    Recommended behavior:
-        - When there are enough reversals, average the last `tail_count` values.
-        - Otherwise return `fallback_level`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Estimate threshold using the trailing reversal points."""
+    if len(reversals) >= tail_count and tail_count > 0:
+        return sum(reversals[-tail_count:]) / tail_count
+    return fallback_level
 
 
 def shared_student_compute_recent_accuracy(history: list[dict], window: int = 12) -> float:
-    """TODO: Compute a trailing percent-correct accuracy metric.
-
-    Output should be a percentage in the `[0, 100]` range.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Compute a trailing percent-correct accuracy metric."""
+    if not history:
+        return 0.0
+        
+    recent_trials = history[-window:]
+    correct_count = sum(1 for row in recent_trials if row.get("Correct") == "Yes")
+    return (correct_count / len(recent_trials)) * 100.0
 
 
 def shared_student_validate_audio_params(*, amplitude: float, stimulus_value: float) -> bool:
-    """TODO: Validate amplitude and stimulus-specific numeric values.
-
-    Returns:
-        `True` when inputs are in safe ranges, otherwise `False`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Validate amplitude and stimulus-specific numeric values."""
+    return (0.0 <= amplitude <= 1.0) and (stimulus_value > 0.0)
 
 
 def shared_student_plot_staircase_with_threshold(
     *, history: list[dict], threshold: float, y_label: str, title: str
 ) -> None:
-    """TODO: Wrapper that draws the staircase and highlights the threshold.
+    """Wrapper that draws the staircase and highlights the threshold."""
+    shared_student_plot_staircase(
+        history=history,
+        threshold=threshold,
+        y_label=y_label,
+        title=title,
+    )
 
     Hint:
         Call `shared_student_plot_staircase(...)` internally to avoid duplicate code.
