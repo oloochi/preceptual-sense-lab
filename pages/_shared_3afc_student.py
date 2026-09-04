@@ -32,11 +32,9 @@ def shared_student_apply_reversal_update(
     safe_down_n = max(1, down_n)
     
     if not is_correct:
-        # Incorrect: move to an easier (higher) level, reset correct streak
         next_level = current_level + step
         next_streak = 0
     else:
-        # Correct: increment streak. If streak reaches down_n, move to harder (lower) level
         next_streak = correct_streak + 1
         if next_streak >= safe_down_n:
             next_level = current_level - step
@@ -44,7 +42,6 @@ def shared_student_apply_reversal_update(
         else:
             next_level = current_level
             
-    # Clamp to boundaries
     next_level = max(min_level, min(max_level, next_level))
     return next_level, next_streak
 
@@ -62,10 +59,8 @@ def shared_student_plot_staircase(
 
     fig, ax = plt.subplots(figsize=(8, 4))
     
-    # Plot continuous trace
     ax.plot(trials, levels, color="black", alpha=0.4, zorder=1)
     
-    # Split scatter points by correctness
     c_x = [t for i, t in enumerate(trials) if corrects[i]]
     c_y = [l for i, l in enumerate(levels) if corrects[i]]
     i_x = [t for i, t in enumerate(trials) if not corrects[i]]
@@ -146,8 +141,3 @@ def shared_student_plot_staircase_with_threshold(
         y_label=y_label,
         title=title,
     )
-
-    Hint:
-        Call `shared_student_plot_staircase(...)` internally to avoid duplicate code.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
