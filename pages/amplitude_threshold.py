@@ -67,30 +67,28 @@ def student_build_amplitude_intervals_audio(
     reference_hz: int,
     target_index: int,
 ) -> list[bytes]:
-    """TODO: Build one 3AFC trial audio set for amplitude discrimination.
-
-    Why this function exists:
-        Each trial needs exactly three candidate sounds with one target interval.
-        This function packages trial generation so the page can remain focused on UI
-        and adaptive logic while keeping stimulus creation testable.
-
-    Inputs:
-        baseline_amplitude: Reference amplitude for non-target intervals.
-        delta_db: Loudness increment in decibels for the target interval.
-        reference_hz: Tone frequency used for all intervals.
-        target_index: Index (0, 1, or 2) of the louder interval.
-
-    Output:
-        A list of exactly 3 WAV byte payloads in interval order.
-
-    Required behavior:
-        - Convert `delta_db` to an amplitude ratio.
-        - Build 3 tones at `reference_hz`.
-        - Use baseline amplitude for two intervals.
-        - Use louder amplitude for `target_index`.
-        - Return WAV bytes compatible with `st.audio`.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    """Build one 3AFC trial audio set for amplitude discrimination."""
+    # Convert delta_db to an amplitude multiplier (ratio)
+    ratio = 10.0 ** (delta_db / 20.0)
+    
+    # Calculate target amplitude and clamp to prevent audio clipping
+    target_amplitude = max(0.01, min(0.95, baseline_amplitude * ratio))
+    duration_s = float(cfg["tone_duration_s"])
+    
+    wav_outputs = []
+    for i in range(3):
+        # The target interval gets the louder amplitude; others get the baseline
+        amp = target_amplitude if i == target_index else baseline_amplitude
+        
+        # Generate the WAV bytes for this interval
+        wav_bytes = single_tone_wav(
+            frequency_hz=float(reference_hz),
+            duration_s=duration_s,
+            amplitude=amp,
+        )
+        wav_outputs.append(wav_bytes)
+        
+    return wav_outputs
 
 
 def student_apply_reversal_update(
