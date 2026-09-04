@@ -251,14 +251,6 @@ try:
         y_label="Amplitude Delta (dB)",
         title="Preview Staircase",
     )
-except NotImplementedError as error:
-    st.error(str(error))
-    st.warning(
-        "Assignment mode is active for this page. Complete "
-        "`student_build_amplitude_intervals_audio` in this file and the shared 3AFC "
-        "TODOs in `pages/_shared_3afc_student.py`, then reload."
-    )
-    st.stop()
 
 adaptive = init_adaptive_state(
     "amplitude",
