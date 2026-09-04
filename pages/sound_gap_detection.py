@@ -65,28 +65,20 @@ def student_build_gap_intervals_audio(
     target_index: int,
     seed: int,
 ) -> list[bytes]:
-    """TODO: Build one 3AFC trial audio set for gap detection.
-
-    Why this function exists:
-        The listener must compare three intervals where only one contains the silent
-        gap. Centralizing generation here makes stimuli reproducible and easy to test.
-
-    Inputs:
-        gap_ms: Gap duration for the target interval.
-        amplitude: Playback amplitude for all intervals.
-        target_index: Index (0, 1, 2) containing the gap.
-        seed: Seed used so generated noise bursts are deterministic.
-
-    Output:
-        A list of exactly three WAV byte payloads.
-
-    Required behavior:
-        - Target interval gets `gap_ms`.
-        - Other intervals get zero gap.
-        - Keep amplitude consistent across all three clips.
-        - Use deterministic seeds so repeated runs are reproducible.
-    """
-    raise NotImplementedError("Not implemented yet; follow the docstring guidance.")
+    duration_s = float(cfg["playback"]["burst_duration_s"])
+    
+    wav_outputs = []
+    for i in range(3):
+        current_gap = gap_ms if i == target_index else 0.0
+        wav_bytes = noise_burst_with_gap_wav(
+            duration_s=duration_s,
+            gap_ms=current_gap,
+            amplitude=amplitude,
+            seed=seed + i,
+        )
+        wav_outputs.append(wav_bytes)
+        
+    return wav_outputs
 
 
 def student_apply_reversal_update(
@@ -99,7 +91,6 @@ def student_apply_reversal_update(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_apply_reversal_update(
         current_level=current_level,
         step=step,
@@ -112,7 +103,6 @@ def student_apply_reversal_update(
 
 
 def student_plot_staircase(history: list[dict], threshold: float, y_label: str, title: str) -> None:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     shared_student_plot_staircase(
         history=history,
         threshold=threshold,
@@ -122,7 +112,6 @@ def student_plot_staircase(history: list[dict], threshold: float, y_label: str, 
 
 
 def student_build_three_interval_targets(*, target_index: int) -> list[bool]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_build_three_interval_targets(target_index=target_index)
 
 
@@ -136,7 +125,6 @@ def student_update_staircase_state(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_update_staircase_state(
         current_level=current_level,
         step=step,
@@ -151,7 +139,6 @@ def student_update_staircase_state(
 def student_estimate_threshold_from_reversals(
     *, reversals: list[float], fallback_level: float, tail_count: int = 4
 ) -> float:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_estimate_threshold_from_reversals(
         reversals=reversals,
         fallback_level=fallback_level,
@@ -160,19 +147,16 @@ def student_estimate_threshold_from_reversals(
 
 
 def student_compute_recent_accuracy(history: list[dict], window: int = 12) -> float:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_compute_recent_accuracy(history=history, window=window)
 
 
 def student_validate_audio_params(*, amplitude: float, gap_ms: float) -> bool:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_validate_audio_params(amplitude=amplitude, stimulus_value=gap_ms)
 
 
 def student_plot_staircase_with_threshold(
     *, history: list[dict], threshold: float, y_label: str, title: str
 ) -> None:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     shared_student_plot_staircase_with_threshold(
         history=history,
         threshold=threshold,
@@ -184,80 +168,9 @@ def student_plot_staircase_with_threshold(
 with st.expander("Assignment TODOs (Edit This Page)"):
     st.markdown(
         "- Implement `student_build_gap_intervals_audio`.\n"
-        "- Implement shared 3AFC helpers in `pages/_shared_3afc_student.py`:\n"
-        "  - `shared_student_apply_reversal_update`\n"
-        "  - `shared_student_plot_staircase`\n"
-        "  - `shared_student_build_three_interval_targets`\n"
-        "  - `shared_student_update_staircase_state`\n"
-        "  - `shared_student_estimate_threshold_from_reversals`\n"
-        "  - `shared_student_compute_recent_accuracy`\n"
-        "  - `shared_student_validate_audio_params`\n"
-        "  - `shared_student_plot_staircase_with_threshold`"
+        "- Implement shared 3AFC helpers in `pages/_shared_3afc_student.py`."
     )
 
-st.caption(
-    "How these functions connect: generate three noise intervals (one with gap) -> "
-    "update adaptive staircase from responses -> estimate threshold from reversals -> plot."
-)
-
-try:
-    _ = student_build_three_interval_targets(target_index=1)
-    _ = student_build_gap_intervals_audio(
-        gap_ms=float(cfg["adaptive"]["start_level"]),
-        amplitude=float(cfg["playback"]["amplitude"]["default"]),
-        target_index=1,
-        seed=123,
-    )
-    _ = student_apply_reversal_update(
-        current_level=float(cfg["adaptive"]["start_level"]),
-        step=float(cfg["adaptive"]["initial_step"]),
-        is_correct=True,
-        correct_streak=1,
-        down_n=int(cfg["adaptive"]["down"]),
-        min_level=float(cfg["adaptive"]["min_level"]),
-        max_level=float(cfg["adaptive"]["max_level"]),
-    )
-    _ = student_update_staircase_state(
-        current_level=float(cfg["adaptive"]["start_level"]),
-        step=float(cfg["adaptive"]["initial_step"]),
-        is_correct=False,
-        correct_streak=0,
-        down_n=int(cfg["adaptive"]["down"]),
-        min_level=float(cfg["adaptive"]["min_level"]),
-        max_level=float(cfg["adaptive"]["max_level"]),
-    )
-    _ = student_estimate_threshold_from_reversals(
-        reversals=[float(cfg["adaptive"]["start_level"])],
-        fallback_level=float(cfg["adaptive"]["start_level"]),
-        tail_count=1,
-    )
-    _ = student_compute_recent_accuracy(
-        history=[{"Correct": "Yes"}, {"Correct": "No"}],
-        window=2,
-    )
-    _ = student_validate_audio_params(
-        amplitude=float(cfg["playback"]["amplitude"]["default"]),
-        gap_ms=float(cfg["adaptive"]["start_level"]),
-    )
-    student_plot_staircase(
-        history=[{"Trial": 1, "Level": float(cfg["adaptive"]["start_level"]), "Correct": "Yes"}],
-        threshold=float(cfg["adaptive"]["start_level"]),
-        y_label="Gap (ms)",
-        title="Preview Staircase",
-    )
-    student_plot_staircase_with_threshold(
-        history=[{"Trial": 1, "Level": float(cfg["adaptive"]["start_level"]), "Correct": "Yes"}],
-        threshold=float(cfg["adaptive"]["start_level"]),
-        y_label="Gap (ms)",
-        title="Preview Staircase",
-    )
-except NotImplementedError as error:
-    st.error(str(error))
-    st.warning(
-        "Assignment mode is active for this page. Complete `student_build_gap_intervals_audio` "
-        "in this file and the shared 3AFC TODOs in `pages/_shared_3afc_student.py`, then reload."
-    )
-    st.stop()
 
 adaptive = init_adaptive_state(
     "gap",
