@@ -60,31 +60,26 @@ config = load_test_config()
 cfg = config["amplitude_discrimination"]
 
 
-def student_build_amplitude_intervals_audio(
+def student_build_pitch_intervals_audio(
     *,
-    baseline_amplitude: float,
-    delta_db: float,
     reference_hz: int,
+    delta_hz: float,
+    amplitude: float,
     target_index: int,
 ) -> list[bytes]:
-    """Build one 3AFC trial audio set for amplitude discrimination."""
-    # Convert delta_db to an amplitude multiplier (ratio)
-    ratio = 10.0 ** (delta_db / 20.0)
-    
-    # Calculate target amplitude and clamp to prevent audio clipping
-    target_amplitude = max(0.01, min(0.95, baseline_amplitude * ratio))
+    """Build one 3AFC trial audio set for pitch discrimination."""
     duration_s = float(cfg["tone_duration_s"])
+    target_hz = float(reference_hz) + delta_hz
     
     wav_outputs = []
     for i in range(3):
-        # The target interval gets the louder amplitude; others get the baseline
-        amp = target_amplitude if i == target_index else baseline_amplitude
+        # Target interval gets the higher pitch; others get the reference pitch
+        freq = target_hz if i == target_index else float(reference_hz)
         
-        # Generate the WAV bytes for this interval
         wav_bytes = single_tone_wav(
-            frequency_hz=float(reference_hz),
+            frequency_hz=freq,
             duration_s=duration_s,
-            amplitude=amp,
+            amplitude=amplitude,
         )
         wav_outputs.append(wav_bytes)
         
