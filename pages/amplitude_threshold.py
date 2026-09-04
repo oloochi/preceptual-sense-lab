@@ -60,26 +60,25 @@ config = load_test_config()
 cfg = config["amplitude_discrimination"]
 
 
-def student_build_pitch_intervals_audio(
+def student_build_amplitude_intervals_audio(
     *,
+    baseline_amplitude: float,
+    delta_db: float,
     reference_hz: int,
-    delta_hz: float,
-    amplitude: float,
     target_index: int,
 ) -> list[bytes]:
-    """Build one 3AFC trial audio set for pitch discrimination."""
+    """Build one 3AFC trial audio set for amplitude discrimination."""
+    ratio = 10.0 ** (delta_db / 20.0)
+    target_amplitude = max(0.01, min(0.95, baseline_amplitude * ratio))
     duration_s = float(cfg["tone_duration_s"])
-    target_hz = float(reference_hz) + delta_hz
     
     wav_outputs = []
     for i in range(3):
-        # Target interval gets the higher pitch; others get the reference pitch
-        freq = target_hz if i == target_index else float(reference_hz)
-        
+        amp = target_amplitude if i == target_index else baseline_amplitude
         wav_bytes = single_tone_wav(
-            frequency_hz=freq,
+            frequency_hz=float(reference_hz),
             duration_s=duration_s,
-            amplitude=amplitude,
+            amplitude=amp,
         )
         wav_outputs.append(wav_bytes)
         
@@ -96,7 +95,6 @@ def student_apply_reversal_update(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_apply_reversal_update(
         current_level=current_level,
         step=step,
@@ -109,7 +107,6 @@ def student_apply_reversal_update(
 
 
 def student_plot_staircase(history: list[dict], threshold: float, y_label: str, title: str) -> None:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     shared_student_plot_staircase(
         history=history,
         threshold=threshold,
@@ -119,7 +116,6 @@ def student_plot_staircase(history: list[dict], threshold: float, y_label: str, 
 
 
 def student_build_three_interval_targets(*, target_index: int) -> list[bool]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_build_three_interval_targets(target_index=target_index)
 
 
@@ -133,7 +129,6 @@ def student_update_staircase_state(
     min_level: float,
     max_level: float,
 ) -> tuple[float, int]:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_update_staircase_state(
         current_level=current_level,
         step=step,
@@ -148,7 +143,6 @@ def student_update_staircase_state(
 def student_estimate_threshold_from_reversals(
     *, reversals: list[float], fallback_level: float, tail_count: int = 4
 ) -> float:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_estimate_threshold_from_reversals(
         reversals=reversals,
         fallback_level=fallback_level,
@@ -157,12 +151,10 @@ def student_estimate_threshold_from_reversals(
 
 
 def student_compute_recent_accuracy(history: list[dict], window: int = 12) -> float:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_compute_recent_accuracy(history=history, window=window)
 
 
 def student_validate_audio_params(*, amplitude: float, frequency_hz: int) -> bool:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     return shared_student_validate_audio_params(
         amplitude=amplitude,
         stimulus_value=float(frequency_hz),
@@ -172,7 +164,6 @@ def student_validate_audio_params(*, amplitude: float, frequency_hz: int) -> boo
 def student_plot_staircase_with_threshold(
     *, history: list[dict], threshold: float, y_label: str, title: str
 ) -> None:
-    """Shared 3AFC TODO: implement in `pages/_shared_3afc_student.py`."""
     shared_student_plot_staircase_with_threshold(
         history=history,
         threshold=threshold,
@@ -251,6 +242,14 @@ try:
         y_label="Amplitude Delta (dB)",
         title="Preview Staircase",
     )
+except NotImplementedError as error:
+    st.error(str(error))
+    st.warning(
+        "Assignment mode is active for this page. Complete "
+        "`student_build_amplitude_intervals_audio` in this file and the shared 3AFC "
+        "TODOs in `pages/_shared_3afc_student.py`, then reload."
+    )
+    st.stop()
 
 adaptive = init_adaptive_state(
     "amplitude",
