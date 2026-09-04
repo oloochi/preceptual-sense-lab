@@ -178,61 +178,6 @@ with st.expander("Assignment TODOs (Edit This Page)"):
     )
 
 
-try:
-    _ = student_build_three_interval_targets(target_index=1)
-    _ = student_build_amplitude_intervals_audio(
-        baseline_amplitude=float(cfg["reference_amplitude"]["default"]),
-        delta_db=float(cfg["adaptive"]["start_level"]),
-        reference_hz=int(cfg["reference_frequency_hz"]["default"]),
-        target_index=1,
-    )
-    _ = student_apply_reversal_update(
-        current_level=float(cfg["adaptive"]["start_level"]),
-        step=float(cfg["adaptive"]["initial_step"]),
-        is_correct=True,
-        correct_streak=1,
-        down_n=int(cfg["adaptive"]["down"]),
-        min_level=float(cfg["adaptive"]["min_level"]),
-        max_level=float(cfg["adaptive"]["max_level"]),
-    )
-    _ = student_update_staircase_state(
-        current_level=float(cfg["adaptive"]["start_level"]),
-        step=float(cfg["adaptive"]["initial_step"]),
-        is_correct=False,
-        correct_streak=0,
-        down_n=int(cfg["adaptive"]["down"]),
-        min_level=float(cfg["adaptive"]["min_level"]),
-        max_level=float(cfg["adaptive"]["max_level"]),
-    )
-    _ = student_estimate_threshold_from_reversals(
-        reversals=[float(cfg["adaptive"]["start_level"])],
-        fallback_level=float(cfg["adaptive"]["start_level"]),
-        tail_count=1,
-    )
-    _ = student_compute_recent_accuracy(
-        history=[{"Correct": "Yes"}, {"Correct": "No"}],
-        window=2,
-    )
-    _ = student_validate_audio_params(
-        amplitude=float(cfg["reference_amplitude"]["default"]),
-        frequency_hz=int(cfg["reference_frequency_hz"]["default"]),
-    )
-    student_plot_staircase(
-        history=[{"Trial": 1, "Level": float(cfg["adaptive"]["start_level"]), "Correct": "Yes"}],
-        threshold=float(cfg["adaptive"]["start_level"]),
-        y_label="Amplitude Delta (dB)",
-        title="Preview Staircase",
-    )
-    student_plot_staircase_with_threshold(
-        history=[{"Trial": 1, "Level": float(cfg["adaptive"]["start_level"]), "Correct": "Yes"}],
-        threshold=float(cfg["adaptive"]["start_level"]),
-        y_label="Amplitude Delta (dB)",
-        title="Preview Staircase",
-    )
-except NotImplementedError as error:
-    st.error(str(error))
-    st.stop()
-
 adaptive = init_adaptive_state(
     "amplitude",
     start_level=float(cfg["adaptive"]["start_level"]),
